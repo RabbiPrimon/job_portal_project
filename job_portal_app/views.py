@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from job_portal_app.models import *
 from django.contrib import messages
 
@@ -54,33 +55,36 @@ def login_func(request):
         
     return render(request, 'auth/login.html')
 
+@login_required
 def dashboard(request):
-    
+
     return render(request,'dashboard.html')
 
 def logout_func(request):
     logout(request)
     return redirect('login_func')
 
+@login_required
 def profile(request):
-    
+
     return render(request, 'profile.html')
 
+@login_required
 def update_profile(request):
     current_user = request.user
     user_type  = current_user.user_type
     if request.method == 'POST':
-        
-        
+
+
         if user_type == 'Employer':
             company_name = request.POST.get('company_name')
             address = request.POST.get('address')
-        
+
             employer_data = EmployerModel.objects.get(employer=current_user)
             employer_data.company_name = company_name
             employer_data.address = address
             employer_data.save()
-            
+
         else:
             full_name = request.POST.get('full_name')
             contact_number = request.POST.get('contact_number')
@@ -93,28 +97,30 @@ def update_profile(request):
             seeker_data.last_education = last_education
             seeker_data.skills = skills
             seeker_data.save()
-            
+
         return redirect('profile')
-            
-    
+
+
     return render(request, 'update-profile.html')
 
 #---------------Job----------
+@login_required
 def job_list(request):
     current_user = request.user
     user_type = current_user.user_type
-    
+
     if user_type == 'JobSeeker':
         job_data = JobPostModel.objects.all()
     else:
         job_data = JobPostModel.objects.filter(posted_by__employer = current_user)
-        
+
     context = {
         'job_data': job_data
     }
-    
+
     return render(request, 'jobs/job-list.html', context)
 
+@login_required
 def add_job(request):
     current_user = request.user
     if request.method == 'POST':
@@ -123,9 +129,9 @@ def add_job(request):
         skills_required = request.POST.get('skills_required')
         salary = request.POST.get('salary')
         deadline = request.POST.get('deadline')
-        
+
         user = EmployerModel.objects.get(employer = current_user)
-        
+
         JobPostModel.objects.create(
             posted_by = user,
             job_title = job_title,
@@ -135,21 +141,22 @@ def add_job(request):
             deadline = deadline,
         )
         return redirect('job_list')
-    
-    
+
+
     return render(request, 'jobs/add-job.html')
 
+@login_required
 def update_job(request, job_id):
     job_data = JobPostModel.objects.get(id = job_id)
-    
+
     if request.method == 'POST':
         job_title = request.POST.get('job_title')
         description = request.POST.get('description')
         skills_required = request.POST.get('skills_required')
         salary = request.POST.get('salary')
         deadline = request.POST.get('deadline')
-    
-  
+
+
         job_data.job_title = job_title
         job_data.description = description
         job_data.skills_required = skills_required
@@ -157,70 +164,76 @@ def update_job(request, job_id):
         job_data.deadline = deadline
 
         job_data.save()
-        
+
         return redirect('job_list')
-    
+
     context = {
         'job_data': job_data
     }
     return render(request, 'jobs/update-job.html',context)
 
+@login_required
 def delete_job(request, job_id):
     JobPostModel.objects.get(id = job_id).delete()
     return redirect('job_list')
 
 
+@login_required
 def applied_job(request, job_id):
     job_data = JobPostModel.objects.get(id = job_id)
     current_user = request.user
-    
+
     application_exists = ApplyJobModel.objects.filter(job = job_data).exists()
     if application_exists:
         messages.warning(request,'Already Applied this job')
         return redirect('job_list')
-    
+
     if request.method == 'POST':
         resume = request.FILES.get('resume')
         user = JobSeekerModel.objects.get(seeker = current_user)
-        
+
         ApplyJobModel.objects.create(
             applied_by = user,
             job = job_data,
             resume = resume,
-            status = 'Pending',            
+            status = 'Pending',
         )
         return redirect('my_application')
     context = {
         'job_data': job_data,
     }
-    
+
     return render(request, 'applied_jobs/apply-job.html',context)
 
+@login_required
 def my_application(request):
     current_user = request.user
     job_data = ApplyJobModel.objects.filter(applied_by__seeker = current_user)
-    
+
     context = {
         'job_data': job_data
     }
-    
+
     return render(request, 'applied_jobs/my-application.html', context)
 
+@login_required
 def applicant_list(request, job_id):
     applicant_data = ApplyJobModel.objects.filter(job = job_id)
-    
+
     context = {
         'applicant_data': applicant_data
     }
-    
+
     return render(request, 'jobs/applicant-list.html',context)
 
+@login_required
 def shortlisted(request, applied_id):
     applied_job = ApplyJobModel.objects.get(id = applied_id)
     applied_job.status = 'Shortlisted'
     applied_job.save()
     return redirect('job_list')
     
+@login_required
 def rejected(request, applied_id):
     applied_job = ApplyJobModel.objects.get(id = applied_id)
     applied_job.status = 'Rejected'

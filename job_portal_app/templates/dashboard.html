@@ -1,7 +1,12 @@
 {% extends 'master/base.html' %}
 
 {% block content %}
-    <h1>Welcome</h1>
-<a href="{% url 'logout_func' %}">Logout</a>
+<div class="container">
+  <div class="card">
+    <h1>Welcome to the Job Portal</h1>
+    <p>Manage your jobs and applications efficiently.</p>
+    <a href="{% url 'logout_func' %}" class="btn btn-danger">Logout</a>
+  </div>
+</div>
 {% endblock content %}
     

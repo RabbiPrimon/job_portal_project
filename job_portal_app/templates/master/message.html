@@ -1,8 +1,8 @@
 {% if messages %}
-
-{% for data in messages %}
-<p>{{data}}</p>    
-{% endfor %}
-        
+<div class="alert alert-success">
+  {% for data in messages %}
+  <p>{{data}}</p>
+  {% endfor %}
+</div>
 {% endif %}
     
